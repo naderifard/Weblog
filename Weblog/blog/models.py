@@ -9,8 +9,6 @@ from django.contrib.auth.models import Group
 class Post(models.Model):
     caption=models.TextField()
     pub_date=models.DateTimeField()
-    likes=models.IntegerField()
-    dislikes=models.IntegerField()
     user=models.ForeignKey(User,on_delete=models.CASCADE)
 
 class Comment(models.Model):
