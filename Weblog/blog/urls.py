@@ -8,4 +8,5 @@ app_name = "blog"
 urlpatterns = [
     path('viewposts/', views.posts_view, name='postview'),
     path('createpost/', views.post_create, name='postcreate'),
+    path('signup/', views.signup, name='signup')
     ]

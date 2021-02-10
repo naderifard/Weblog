@@ -6,8 +6,10 @@ from .models import *
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-
-
+from .forms import SignUp
+from django.shortcuts import render, redirect, reverse
+from django.db import IntegrityError
+from django.contrib.auth import login
 
 
 def posts_view(request):
@@ -36,4 +38,22 @@ def post_create(request):
         form = PostForm()
 
     return render(request, 'blog/postscreate.html', {'form': form})
+
+
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUp(request.POST)
+        if form.is_valid():
+            user = User.objects.create_user(username=request.POST['username'],
+                                               password=request.POST['password'])
+            login(request,user)
+
+            return HttpResponseRedirect('/blog/viewposts/')
+
+    else:
+        form = SignUp()
+
+    return render(request, 'blog/signup.html', {'form': form})
 
