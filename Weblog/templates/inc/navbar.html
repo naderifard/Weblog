@@ -1,0 +1,9 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="navbar-nav">
+        <a class="nav-item nav-link active" href="{% url 'blog:all_posts' %}">Home</a>
+        {% if request.user.is_authenticated %}
+        {% else %}
+        <a class="nav-item nav-link active" href="{% url 'accounts:login' %}">Login</a>
+        {% endif %}
+    </div>
+</nav>

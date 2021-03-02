@@ -6,54 +6,67 @@ from .models import *
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from .forms import SignUp
 from django.shortcuts import render, redirect, reverse
 from django.db import IntegrityError
-from django.contrib.auth import login
+from django.contrib.auth import login,authenticate
+from django.contrib import messages
+from django.utils.text import slugify
 
-
-def posts_view(request):
+def all_posts(request):
     try:
         p = Post.objects.all()
     except Post.DoesNotExist:
         raise Http404("Post does not exist")
-    return render(request, 'blog/postsview.html', {'posts': p})
+    return render(request, 'blog/allposts.html', {'posts': p})
 
-def post_create(request):
-    if request.method == 'POST':
-        form = PostForm(request.POST)
-        # check whether it's valid:
-        if form.is_valid():
-            caption=form.cleaned_data['caption']
-            tags=form.cleaned_data['tags']
-            tags=tags.split()
-            #author = get_object_or_404(User, username=request.user.username)
-            post=Post.objects.create(caption=caption,user=request.user,pub_date=timezone.now())
-            for i in tags:
-                Tag.objects.create(post=post,text=i)
-            return HttpResponseRedirect('/thanks/')
 
-    # if a GET (or any other method) we'll create a blank form
+def post_detail(request):
+    def post_detail(request,year, month, day, slug):
+        post = get_object_or_404(Post, created__year=year, created__month=month, created__day=day, slug=slug)
+        comments = Comment.objects.filter(post=post, is_reply=False)
+        reply_form = AddReplyForm()
+        if request.method == 'POST':
+            form = AddCommentForm(request.POST)
+            if form.is_valid():
+                new_comment = form.save(commit=False)
+                new_comment.post = post
+                new_comment.user = request.user
+                new_comment.save()
+                messages.success(request, 'your comment submitted successfully')
+        else:
+            form = AddCommentForm()
+        return render(request, 'blog/postdetail.html',
+                      {'post': post, 'comments': comments, 'form': form, 'reply': reply_form})
+
+
+def add_post(request,user_id):
+    if request.user.id == user_id:
+        if request.method == 'POST':
+            form = AddPostForm(request.POST)
+            if form.is_valid():
+                new_post = form.save(commit=False)
+                new_post.user = request.user
+                new_post.slug = slugify(form.cleaned_data['body'][:30])
+                new_post.save()
+                messages.success(request, 'your post submitted', 'success')
+                return redirect('accounts:dashboard', user_id)
+        else:
+            form = AddPostForm()
+        return render(request, 'blog/postscreate.html', {'form': form})
     else:
-        form = PostForm()
-
-    return render(request, 'blog/postscreate.html', {'form': form})
+        return redirect('blog:postview')
 
 
+def post_delete(request):
+    pass
 
 
-def signup(request):
-    if request.method == 'POST':
-        form = SignUp(request.POST)
-        if form.is_valid():
-            user = User.objects.create_user(username=request.POST['username'],
-                                               password=request.POST['password'])
-            login(request,user)
+def post_edit(request):
+    pass
 
-            return HttpResponseRedirect('/blog/viewposts/')
 
-    else:
-        form = SignUp()
 
-    return render(request, 'blog/signup.html', {'form': form})
+
+
+
 
